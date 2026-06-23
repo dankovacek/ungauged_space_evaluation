@@ -1,0 +1,40 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.venv.*
+
+# MyST build outputs
+_build/
+
+# Local environment and secrets
+.env
+.env.*
+
+# Intermediate/cache files (not results)
+data/cache/
+data/results/
+
+# XGBoost models: keep only the selected trial (trial 6, proximity_plus_attributes).
+# All other model files come from dankovacek/divergence_prediction and are not tracked.
+data/xgb_models/proximity_*.json
+data/xgb_models/physical_attributes_*.json
+!data/xgb_models/proximity_plus_attributes_trial6_*.json
+data/BCUB_regions_merged_R0.geojson
+
+
+# KLD prediction results: keep only the compact trial summary CSV, not the large .npy.
+data/KLD_prediction_results/*.npy
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.github/
+workflow_outline.md
