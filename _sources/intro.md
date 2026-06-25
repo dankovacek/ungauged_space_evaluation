@@ -1,10 +1,3 @@
----
-title: Ungauged Space Evaluation
-kernelspec:
-  name: python3
-  display_name: Python 3
----
-
 # Ungauged Space Evaluation
 
 This book documents an analysis of how well the existing streamflow monitoring
