@@ -1,0 +1,37 @@
+title: Ungauged Space Evaluation
+author: Dan Kovacek
+
+exclude_patterns:
+  - .pytest_cache/*
+  - .github
+  - __pycache__
+  - .ipynb_checkpoints
+  - "*.pyc"
+  - _build
+  - .venv/*
+  - .venv/**
+
+execute:
+  execute_notebooks: cache
+
+only_build_toc_files: true
+
+repository:
+  url: https://github.com/dankovacek/ungauged_space_evaluation
+  path_to_book: .
+  branch: main
+
+html:
+  use_issues_button: true
+  use_repository_button: true
+  navigation_depth: 4
+
+sphinx:
+  extra_extensions:
+    - bokeh.sphinxext.bokeh_plot
+    - sphinxcontrib.mermaid
+  config:
+    myst_enable_extensions:
+      - colon_fence
+      - dollarmath
+      - amsmath

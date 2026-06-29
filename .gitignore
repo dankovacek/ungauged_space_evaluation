@@ -17,9 +17,12 @@ _build/
 .env
 .env.*
 
+# QGis files
+*.qgz
+
 # Intermediate/cache files (not results)
 data/cache/
-data/results/
+data/results/*.parquet
 
 # XGBoost models: keep only the selected trial (trial 6, proximity_plus_attributes).
 # All other model files come from dankovacek/divergence_prediction and are not tracked.
