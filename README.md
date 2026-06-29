@@ -16,9 +16,13 @@ A high minimum KLD between an ungauged basin and its most similar gauged neighbo
 Run in this order.
 
 1. Terminal, outside QGIS; generate or refresh the overview GeoPackage:
+
+```bash
   Watershed_descriptors_*.csv           # catchment descriptor table
   BCUB_regions_merged_R0.geojson        # region boundaries
   xgb_models/                           # tracked: proximity_plus_attributes_trial6_fold*.json
+```
+
 Large precursor artifacts are not tracked here, including full model sets and the `.npy` result bundle. The model results come from [dankovacek/divergence_prediction](https://github.com/dankovacek/divergence_prediction).
 
 ## Requirements
