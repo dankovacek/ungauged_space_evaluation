@@ -2,6 +2,8 @@
 
 Code supporting the analysis of how well the existing streamflow monitoring network represents the population of ungauged catchments in British Columbia. Representation is measured using KL divergence (KLD) between unit-area runoff distributions (flow duration curves) of gauged and ungauged sites.
 
+A Jupyter Book containing supporting information is provided at [dankovacek.github.io/ungauged_space_evaluation](https://dankovacek.github.io/ungauged_space_evaluation).
+
 ## Background
 
 A high minimum KLD between an ungauged basin and its most similar gauged neighbours indicates that the catchment is poorly represented by the current network. The analysis produces a ranked list of gauged stations by their representation of the ungauged space, which can be used to support monitoring network design.

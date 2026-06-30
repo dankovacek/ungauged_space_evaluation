@@ -198,6 +198,148 @@ def _make_figure(df, stations_active, stations_disc, region_label, region_xs, re
     return p
 
 
+def build_ungauged_overview_map(
+    results_dir=None,
+    stations_path='data/filtered_station_set.geojson',
+    descriptors_path='data/Watershed_descriptors_20260203_with_stats.csv',
+    regions_path='data/BCUB_regions_merged_R0.geojson',
+):
+    """
+    Build and return the all-regions ungauged basin classification map.
+    
+    Loads all kld_donor_*.parquet files from results_dir, filters to rows where
+    min_predicted_kld > 1, projects to EPSG:3857, overlays active/discontinued
+    gauged stations, and shows simplified region boundaries.
+    
+    Returns a Bokeh figure with CartoDB Positron tiles, classified basin points,
+    station markers, and region boundary patches.
+    """
+    if results_dir is None:
+        results_dir = Path('data/results')
+    else:
+        results_dir = Path(results_dir)
+    
+    # Load all overview data
+    paths = sorted(results_dir.glob('kld_donor_*.parquet'))
+    if not paths:
+        raise FileNotFoundError(f'No kld_donor_*.parquet files found in {results_dir}.')
+    
+    frames = []
+    for path in paths:
+        dfi = pd.read_parquet(path)
+        required = {'min_predicted_kld', 'centroid_lon', 'centroid_lat'}
+        if not required.issubset(dfi.columns):
+            print(f'Skipping malformed overview source {path.name}; columns={list(dfi.columns)}')
+            continue
+        dfi = dfi[dfi['min_predicted_kld'] > 1].copy()
+        if not dfi.empty:
+            frames.append(dfi)
+    
+    if not frames:
+        raise ValueError('No valid kld_donor_*.parquet files with required columns were found.')
+    
+    df = pd.concat(frames, ignore_index=True)
+    
+    # Project ungauged centroids to EPSG:3857
+    transformer = Transformer.from_crs('EPSG:4326', 'EPSG:3857', always_xy=True)
+    df['x'], df['y'] = transformer.transform(df['centroid_lon'].values, df['centroid_lat'].values)
+    
+    # Load gauged stations and filter to bounding box
+    stations_gdf = gpd.read_file(stations_path)
+    x_min, x_max = df['x'].min(), df['x'].max()
+    y_min, y_max = df['y'].min(), df['y'].max()
+    stn_x = stations_gdf.geometry.x.values
+    stn_y = stations_gdf.geometry.y.values
+    bbox_mask = (stn_x >= x_min) & (stn_x <= x_max) & (stn_y >= y_min) & (stn_y <= y_max)
+    stations_gdf = stations_gdf[bbox_mask].copy()
+    
+    # Merge station active/inactive status
+    descriptors = pd.read_csv(descriptors_path, usecols=['official_id', 'active'])
+    status = descriptors.set_index('official_id')['active']
+    stations_gdf['active'] = stations_gdf['official_id'].map(status).fillna(True).astype(bool)
+    
+    def _stn_xy(mask):
+        sub = stations_gdf[mask]
+        return pd.DataFrame({'x': sub.geometry.x.values, 'y': sub.geometry.y.values})
+    
+    stations_active = _stn_xy(stations_gdf['active'])
+    stations_disc = _stn_xy(~stations_gdf['active'])
+    
+    # Build simplified region boundary (outer join across all regions in data)
+    regions_gdf = gpd.read_file(regions_path)
+    if 'region_code' in df.columns:
+        codes = sorted(df['region_code'].dropna().astype(str).unique())
+        regions_sel = regions_gdf[regions_gdf['region_code'].astype(str).isin(codes)].copy()
+        if regions_sel.empty:
+            regions_sel = regions_gdf.copy()
+    else:
+        regions_sel = regions_gdf.copy()
+    
+    # Simplify geometry for browser performance
+    regions_sel['geometry'] = regions_sel.geometry.simplify(_REGION_SIMPLIFY_M, preserve_topology=True)
+    regions_3857 = regions_sel.to_crs('EPSG:3857')
+    region_xs, region_ys = [], []
+    for geom in regions_3857.geometry:
+        xs, ys = _geom_to_patches(geom)
+        region_xs.extend(xs)
+        region_ys.extend(ys)
+    
+    # Build the figure
+    p_map = _make_figure(
+        df, stations_active, stations_disc,
+        region_label='Region bounds',
+        region_xs=region_xs, region_ys=region_ys,
+        toolbar_location='right'
+    )
+    
+    return p_map
+
+
+def build_ungauged_overview_layout(
+    results_dir=None,
+    stations_path='data/filtered_station_set.geojson',
+    descriptors_path='data/Watershed_descriptors_20260203_with_stats.csv',
+    regions_path='data/BCUB_regions_merged_R0.geojson',
+):
+    """
+    Build and return the full overview layout with map and KLD distribution inset.
+    
+    Used by the CLI to generate the full HTML export. Returns a Bokeh column
+    layout with the map on top and an inset box plot below.
+    """
+    if results_dir is None:
+        results_dir = Path('data/results')
+    else:
+        results_dir = Path(results_dir)
+    
+    p_map = build_ungauged_overview_map(
+        results_dir=results_dir,
+        stations_path=stations_path,
+        descriptors_path=descriptors_path,
+        regions_path=regions_path,
+    )
+    
+    # Extract KLD values from all parquet files for the inset
+    paths = sorted(results_dir.glob('kld_donor_*.parquet'))
+    frames = []
+    for path in paths:
+        dfi = pd.read_parquet(path)
+        if 'min_predicted_kld' in dfi.columns:
+            dfi = dfi[dfi['min_predicted_kld'] > 1].copy()
+            if not dfi.empty:
+                frames.append(dfi)
+    
+    if frames:
+        df_all = pd.concat(frames, ignore_index=True)
+        vals = df_all['min_predicted_kld'].replace([np.inf, -np.inf], np.nan).dropna().values
+        p_inset = _make_inset(vals)
+        layout = column(p_map, p_inset)
+        layout.styles = {'position': 'relative', 'display': 'inline-block'}
+        return layout
+    
+    return p_map
+
+
 def main():
     parser = argparse.ArgumentParser(description='Plot predicted KLD donor results.')
     parser.add_argument(
@@ -223,29 +365,38 @@ def main():
     args = parser.parse_args()
 
     results_dir = Path('data/results')
+    
+    # Handle overview mode using new helpers
     if args.overview_plot:
-        paths = sorted(results_dir.glob('kld_donor_*.parquet'))
-        if not paths:
-            raise FileNotFoundError('No kld_donor_*.parquet files found in data/results.')
-        frames = []
-        for path in paths:
-            dfi = pd.read_parquet(path)
-            required = {'min_predicted_kld', 'centroid_lon', 'centroid_lat'}
-            if not required.issubset(dfi.columns):
-                print(f'Skipping malformed overview source {path.name}; columns={list(dfi.columns)}')
-                continue
-            frames.append(dfi)
-        if not frames:
-            raise ValueError('No valid kld_donor_*.parquet files with required columns were found.')
-        df = pd.concat(frames, ignore_index=True)
-        run_label = 'overview'
-    else:
-        if not args.region:
-            parser.error('region is required unless --overview-plot is specified')
-        path = results_dir / f'kld_donor_{args.region}.parquet'
-        df = pd.read_parquet(path)
-        _require_columns(df, ['min_predicted_kld', 'centroid_lon', 'centroid_lat'], path.name)
-        run_label = args.region
+        out_dir = Path('data/results/plots')
+        if not out_dir.exists():
+            out_dir.mkdir(parents=True, exist_ok=True)
+            print(f'Created output directory: {out_dir}')
+        
+        qgis_dir = out_dir / 'qgis'
+        if not args.no_qgis_export:
+            _export_qgis_overview(results_dir, qgis_dir)
+        
+        html_path = out_dir / 'kld_donor_overview_plot.html'
+        output_file(str(html_path))
+        map_with_inset = build_ungauged_overview_layout(
+            results_dir=results_dir,
+            stations_path='data/filtered_station_set.geojson',
+            descriptors_path='data/Watershed_descriptors_20260203_with_stats.csv',
+            regions_path='data/BCUB_regions_merged_R0.geojson',
+        )
+        show(map_with_inset)
+        print(f'Saved HTML: {html_path}')
+        return
+    
+    # Region-specific mode (existing logic)
+    if not args.region:
+        parser.error('region is required unless --overview-plot is specified')
+    
+    path = results_dir / f'kld_donor_{args.region}.parquet'
+    df = pd.read_parquet(path)
+    _require_columns(df, ['min_predicted_kld', 'centroid_lon', 'centroid_lat'], path.name)
+    run_label = args.region
 
     df = df[df['min_predicted_kld'] > 1].copy()
 
@@ -274,29 +425,12 @@ def main():
 
     # region boundary: simplify and reproject
     regions_gdf = gpd.read_file('data/BCUB_regions_merged_R0.geojson')
-    if args.overview_plot:
-        if 'region_code' in df.columns:
-            codes = sorted(df['region_code'].dropna().astype(str).unique())
-            regions_sel = regions_gdf[regions_gdf['region_code'].astype(str).isin(codes)].copy()
-            if regions_sel.empty:
-                regions_sel = regions_gdf.copy()
-        else:
-            regions_sel = regions_gdf.copy()
-        regions_sel['geometry'] = regions_sel.geometry.simplify(_REGION_SIMPLIFY_M, preserve_topology=True)
-        regions_3857 = regions_sel.to_crs('EPSG:3857')
-        region_xs, region_ys = [], []
-        for geom in regions_3857.geometry:
-            xs, ys = _geom_to_patches(geom)
-            region_xs.extend(xs)
-            region_ys.extend(ys)
-        region_label = 'Region bounds'
-    else:
-        region_geom = regions_gdf[regions_gdf['region_code'] == args.region].geometry.union_all()
-        region_geom = region_geom.simplify(_REGION_SIMPLIFY_M, preserve_topology=True)
-        region_geom = (gpd.GeoSeries([region_geom], crs='EPSG:3005')
-                          .to_crs('EPSG:3857').iloc[0])
-        region_xs, region_ys = _geom_to_patches(region_geom)
-        region_label = f'{args.region} Region bound'
+    region_geom = regions_gdf[regions_gdf['region_code'] == args.region].geometry.union_all()
+    region_geom = region_geom.simplify(_REGION_SIMPLIFY_M, preserve_topology=True)
+    region_geom = (gpd.GeoSeries([region_geom], crs='EPSG:3005')
+                      .to_crs('EPSG:3857').iloc[0])
+    region_xs, region_ys = _geom_to_patches(region_geom)
+    region_label = f'{args.region} Region bound'
 
     out_dir = Path('data/results/plots')
     if not out_dir.exists():
@@ -305,12 +439,7 @@ def main():
 
     qgis_dir = out_dir / 'qgis'
     if not args.no_qgis_export:
-        if args.overview_plot:
-            _export_qgis_overview(results_dir, qgis_dir)
-        else:
-            _export_qgis_region(df, args.region, out_dir)
-        if args.update_overview:
-            _export_qgis_overview(results_dir, qgis_dir)
+        _export_qgis_region(df, args.region, out_dir)
 
     html_path = out_dir / f'kld_donor_{run_label}_plot.html'
     output_file(str(html_path))
