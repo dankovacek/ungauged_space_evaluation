@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Ungauged Space Evaluation &#8212; Ungauged Space Evaluation</title>
+    <title>Monitoring Region Evaluation &#8212; Ungauged Space Evaluation</title>
   
   
   
@@ -60,10 +60,10 @@
     <script async="async" src="_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'intro';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'monitoring-region-evaluation';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Monitoring Region Evaluation" href="monitoring-region-evaluation.html" />
+    <link rel="prev" title="Ungauged Space Evaluation" href="intro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -115,8 +115,6 @@
       
       
       
-        
-      
       <dialog id="pst-primary-sidebar-modal"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
@@ -136,7 +134,7 @@
     
   
 
-<a class="navbar-brand logo" href="#">
+<a class="navbar-brand logo" href="intro.html">
   
   
   
@@ -157,14 +155,14 @@
     <div class="bd-toc-item navbar-nav active">
         
         <ul class="nav bd-sidenav bd-sidenav__home-link">
-            <li class="toctree-l1 current active">
-                <a class="reference internal" href="#">
+            <li class="toctree-l1">
+                <a class="reference internal" href="intro.html">
                     Ungauged Space Evaluation
                 </a>
             </li>
         </ul>
-        <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="monitoring-region-evaluation.html">Monitoring Region Evaluation</a></li>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Monitoring Region Evaluation</a></li>
 </ul>
 
     </div>
@@ -241,7 +239,7 @@
       
       
       
-      <li><a href="https://github.com/dankovacek/ungauged_space_evaluation/issues/new?title=Issue%20on%20page%20%2Fintro.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/dankovacek/ungauged_space_evaluation/issues/new?title=Issue%20on%20page%20%2Fmonitoring-region-evaluation.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -271,7 +269,7 @@
       
       
       
-      <li><a href="_sources/intro.md" target="_blank"
+      <li><a href="_sources/monitoring-region-evaluation.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -347,7 +345,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Ungauged Space Evaluation</h1>
+    <h1>Monitoring Region Evaluation</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -357,7 +355,14 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-representation">Station Network Representation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ungauged-space-coverage-map">Ungauged Space Coverage Map</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methodology">Methodology</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prediction-process">Prediction Process</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-selection-and-classification">Point Selection and Classification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-overlay">Station Network Overlay</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relationship-to-station-importance">Relationship to Station Importance</a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -369,40 +374,53 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="ungauged-space-evaluation">
-<h1>Ungauged Space Evaluation<a class="headerlink" href="#ungauged-space-evaluation" title="Link to this heading">#</a></h1>
-<p>This book documents an analysis of how well the existing streamflow monitoring
-network in British Columbia represents the population of ungauged catchments.
-Representation is measured using KL divergence (KLD) between unit-area runoff
-distributions (flow duration curves) of gauged and ungauged sites.</p>
-<p>A high minimum KLD between an ungauged basin and its most similar gauged
-neighbours indicates that the catchment is poorly represented by the current
-network. The analysis produces a ranked list of gauged stations by their
-representation of the ungauged space, which can be used to support monitoring
-network design decisions.</p>
-<section id="station-network-representation">
-<h2>Station Network Representation<a class="headerlink" href="#station-network-representation" title="Link to this heading">#</a></h2>
-<p>The map below shows every gauged station in the network, coloured by how many
-ungauged basins the station best represents (its “soft count” quintile).  The
-soft count is the number of ungauged basins for which the station is the most
-similar gauged neighbour, where fractional counts are assigned when multiple
-gauged stations are within a small tolerance (5%) of the minimum KLD.
-Stations with no representation are shown as hollow circles. Hover over any
-point to see its official station ID and soft count.</p>
-<div style="height:520px;"><script src="bokeh-content-fdab5ee04f4c4978b453d03443cbab5d-intro.js" id="ef3ac871-aea4-4982-a3ae-b132125f140d"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="monitoring-region-evaluation">
+<h1>Monitoring Region Evaluation<a class="headerlink" href="#monitoring-region-evaluation" title="Link to this heading">#</a></h1>
+<section id="ungauged-space-coverage-map">
+<h2>Ungauged Space Coverage Map<a class="headerlink" href="#ungauged-space-coverage-map" title="Link to this heading">#</a></h2>
+<p>The map below shows the predicted representation gap across all ungauged basins in British Columbia. Each point represents an ungauged catchment, coloured by its minimum predicted KL divergence (KLD) to the nearest gauged station in the monitoring network. The green and orange triangles show active and discontinued gauged stations respectively.</p>
+</section>
+<section id="methodology">
+<h2>Methodology<a class="headerlink" href="#methodology" title="Link to this heading">#</a></h2>
+<section id="prediction-process">
+<h3>Prediction Process<a class="headerlink" href="#prediction-process" title="Link to this heading">#</a></h3>
+<p>For each ungauged basin, we predict the KL divergence between its flow-duration curve (FDC) and the FDC of every gauged station in the network. Predictions use XGBoost models trained on pairwise comparisons of gauged stations, using physical watershed attributes (e.g. slope, elevation, drainage area) and the Euclidean distance between basin centroids as features. The model learns to predict log(KLD), and predictions are back-transformed with exp(). Trial 6 was selected (the trial whose median out-of-sample MAE is closest to the overall median across all trials), and all five fold models for that trial are averaged.</p>
+</section>
+<section id="point-selection-and-classification">
+<h3>Point Selection and Classification<a class="headerlink" href="#point-selection-and-classification" title="Link to this heading">#</a></h3>
+<p>Only ungauged basins with minimum predicted KLD <strong>greater than 1 bit</strong> are plotted. This threshold excludes basins that are very well represented by at least one existing station (since KLD &lt; 1 bit represents a small divergence in information terms).</p>
+<p>The plotted basins are classified into three groups by their minimum predicted KLD:</p>
+<ul class="simple">
+<li><p><strong>1–2 bits</strong> (dark): basins with reasonable representation, though some divergence remains.</p></li>
+<li><p><strong>2–5 bits</strong> (medium): basins with moderate to significant gaps in coverage.</p></li>
+<li><p><strong>5+ bits</strong> (bright pink): basins with poor representation, indicating substantial gaps between their FDC and the network.</p></li>
+</ul>
+</section>
+<section id="station-network-overlay">
+<h3>Station Network Overlay<a class="headerlink" href="#station-network-overlay" title="Link to this heading">#</a></h3>
+<p>The map shows all gauged stations within the geographic bounding box of the plotted basins. Active stations (green) are currently in operation, while discontinued stations (orange) are no longer collecting data.</p>
+</section>
+<section id="relationship-to-station-importance">
+<h3>Relationship to Station Importance<a class="headerlink" href="#relationship-to-station-importance" title="Link to this heading">#</a></h3>
+<p>This overview map complements the station-importance map in the preceding section. Both use the same underlying predictions:</p>
+<ul class="simple">
+<li><p>The <strong>station-importance map</strong> (intro page) aggregates predictions from the basin side, ranking each gauged station by how many ungauged basins it best represents (the “soft count” allows fractional counts for near-ties between “best” stations).</p></li>
+<li><p>The <strong>monitoring-region evaluation map</strong> shows the same predictions from the basin side, highlighting where coverage gaps exist across the landscape and which stations may need attention or expansion to improve network representation.</p></li>
+</ul>
+<p>Together, these two views provide complementary perspectives on network adequacy: one identifies which stations are most valuable to the current ungauged space, and the other identifies which areas have the poorest coverage.</p>
+<div style="height:700px;"><script src="bokeh-content-f8196e01779d4481a5cf5759024c92df-monitoring-region-evaluation.js" id="cda9bde5-54df-4d3a-a3d7-0ce4c94a1c51"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">plot_station_rankings</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_station_importance_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plot_pred_dkl</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_ungauged_overview_map</span>
 
-<span class="n">show</span><span class="p">(</span><span class="n">build_station_importance_map</span><span class="p">())</span>
+<span class="n">show</span><span class="p">(</span><span class="n">build_ungauged_overview_map</span><span class="p">())</span>
 </pre></div>
 </div>
 </section>
-<div class="toctree-wrapper compound">
-</div>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -435,14 +453,14 @@ point to see its official station ID and soft count.</p>
                 <footer class="prev-next-footer d-print-none">
                   
 <div class="prev-next-area">
-    <a class="right-next"
-       href="monitoring-region-evaluation.html"
-       title="next page">
+    <a class="left-prev"
+       href="intro.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
-        <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Monitoring Region Evaluation</p>
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Ungauged Space Evaluation</p>
       </div>
-      <i class="fa-solid fa-angle-right"></i>
     </a>
 </div>
                 </footer>
@@ -462,7 +480,14 @@ point to see its official station ID and soft count.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-representation">Station Network Representation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ungauged-space-coverage-map">Ungauged Space Coverage Map</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methodology">Methodology</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prediction-process">Prediction Process</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-selection-and-classification">Point Selection and Classification</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-overlay">Station Network Overlay</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relationship-to-station-importance">Relationship to Station Importance</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
