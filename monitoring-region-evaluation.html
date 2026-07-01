@@ -34,7 +34,7 @@
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css?v=8cd3d715" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css?v=4fa983c6" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
   
@@ -63,7 +63,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'monitoring-region-evaluation';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Ungauged Space Evaluation" href="intro.html" />
+    <link rel="prev" title="Monitoring Network Evaluation" href="intro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -157,7 +157,7 @@
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1">
                 <a class="reference internal" href="intro.html">
-                    Ungauged Space Evaluation
+                    Monitoring Network Evaluation
                 </a>
             </li>
         </ul>
@@ -361,6 +361,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-selection-and-classification">Point Selection and Classification</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-overlay">Station Network Overlay</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relationship-to-station-importance">Relationship to Station Importance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#threshold-sensitivity">Threshold Sensitivity</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#best-donor-cdf">Best-Donor CDF</a></li>
 </ul>
 </li>
 </ul>
@@ -378,13 +380,13 @@
 <h1>Monitoring Region Evaluation<a class="headerlink" href="#monitoring-region-evaluation" title="Link to this heading">#</a></h1>
 <section id="ungauged-space-coverage-map">
 <h2>Ungauged Space Coverage Map<a class="headerlink" href="#ungauged-space-coverage-map" title="Link to this heading">#</a></h2>
-<p>The map below shows the predicted representation gap across all ungauged basins in British Columbia. Each point represents an ungauged catchment, coloured by its minimum predicted KL divergence (KLD) to the nearest gauged station in the monitoring network. The green and orange triangles show active and discontinued gauged stations respectively.</p>
+<p>The map below shows the (predicted) representation gap across the unmonitored space in British Columbia. Each point represents an ungauged catchment, coloured by its minimum predicted KL divergence (KLD) to the nearest gauged station in the monitoring network. The green and orange triangles show active and discontinued streamflow monitoring stations, respectively.</p>
 </section>
 <section id="methodology">
 <h2>Methodology<a class="headerlink" href="#methodology" title="Link to this heading">#</a></h2>
 <section id="prediction-process">
 <h3>Prediction Process<a class="headerlink" href="#prediction-process" title="Link to this heading">#</a></h3>
-<p>For each ungauged basin, we predict the KL divergence between its flow-duration curve (FDC) and the FDC of every gauged station in the network. Predictions use XGBoost models trained on pairwise comparisons of gauged stations, using physical watershed attributes (e.g. slope, elevation, drainage area) and the Euclidean distance between basin centroids as features. The model learns to predict log(KLD), and predictions are back-transformed with exp(). Trial 6 was selected (the trial whose median out-of-sample MAE is closest to the overall median across all trials), and all five fold models for that trial are averaged.</p>
+<p>For each ungauged basin, we predict the KL divergence between its flow-duration curve (FDC) and the FDC of every gauged station in the network. Predictions use XGBoost models trained on pairwise comparisons of gauged stations, using physical watershed attributes (e.g. slope, elevation, drainage area) and the Euclidean distance between basin centroids as features (see the repository). The model learns to predict log(KLD), and predictions are back-transformed with exp(). Trial 6 was selected (the trial whose median out-of-sample MAE is closest to the overall median across all trials).</p>
 </section>
 <section id="point-selection-and-classification">
 <h3>Point Selection and Classification<a class="headerlink" href="#point-selection-and-classification" title="Link to this heading">#</a></h3>
@@ -407,16 +409,24 @@
 <li><p>The <strong>station-importance map</strong> (intro page) aggregates predictions from the basin side, ranking each gauged station by how many ungauged basins it best represents (the “soft count” allows fractional counts for near-ties between “best” stations).</p></li>
 <li><p>The <strong>monitoring-region evaluation map</strong> shows the same predictions from the basin side, highlighting where coverage gaps exist across the landscape and which stations may need attention or expansion to improve network representation.</p></li>
 </ul>
-<p>Together, these two views provide complementary perspectives on network adequacy: one identifies which stations are most valuable to the current ungauged space, and the other identifies which areas have the poorest coverage.</p>
-<div style="height:700px;"><script src="bokeh-content-f8196e01779d4481a5cf5759024c92df-monitoring-region-evaluation.js" id="cda9bde5-54df-4d3a-a3d7-0ce4c94a1c51"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<p>These two views provide complementary perspectives on network adequacy: one identifies which stations are most valuable to the current ungauged space, and the other identifies which areas have the poorest coverage.  Here “coverage” means recoverability of the flow duration curve.</p>
+</section>
+<section id="threshold-sensitivity">
+<h3>Threshold Sensitivity<a class="headerlink" href="#threshold-sensitivity" title="Link to this heading">#</a></h3>
+<p>The station-importance ranking is sensitive to the tie threshold used when several gauged stations fall close to the minimum predicted KLD for a basin. The original 5% rule is intentionally strict, so the analysis below recomputes soft counts at 5, 10, 20, 30, 40, and 50 percent above the basin-specific minimum KLD. The purpose is to show whether the ranking is stable when the tie band is widened to better match the spread in predicted KLD values.</p>
+</section>
+<section id="best-donor-cdf">
+<h3>Best-Donor CDF<a class="headerlink" href="#best-donor-cdf" title="Link to this heading">#</a></h3>
+<p>The second plot shows the empirical CDF of the basin-level minimum predicted KLD values, which is the set of best-donor values after each ungauged basin has been matched to its most representative gauged station. This is the same output that drives the monitoring-region map above, and it provides the baseline distribution against which the threshold sweep should be read.</p>
+<div style="height:680px;"><script src="bokeh-content-bac41de18a364893996778f6efcb68c4-monitoring-region-evaluation.js" id="d7f7081c-d29a-4042-81f9-2c869fb7ae6e"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">plot_pred_dkl</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_ungauged_overview_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plot_station_rankings</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_station_threshold_and_cdf_layout</span>
 
-<span class="n">show</span><span class="p">(</span><span class="n">build_ungauged_overview_map</span><span class="p">())</span>
+<span class="n">show</span><span class="p">(</span><span class="n">build_station_threshold_and_cdf_layout</span><span class="p">())</span>
 </pre></div>
 </div>
 </section>
@@ -459,7 +469,7 @@
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Ungauged Space Evaluation</p>
+        <p class="prev-next-title">Monitoring Network Evaluation</p>
       </div>
     </a>
 </div>
@@ -486,6 +496,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-selection-and-classification">Point Selection and Classification</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-overlay">Station Network Overlay</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relationship-to-station-importance">Relationship to Station Importance</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#threshold-sensitivity">Threshold Sensitivity</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#best-donor-cdf">Best-Donor CDF</a></li>
 </ul>
 </li>
 </ul>
