@@ -361,7 +361,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-selection-and-classification">Point Selection and Classification</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-overlay">Station Network Overlay</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relationship-to-station-importance">Relationship to Station Importance</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#threshold-sensitivity">Threshold Sensitivity</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#best-donor-cdf">Best-Donor CDF</a></li>
 </ul>
 </li>
@@ -386,21 +385,20 @@
 <h2>Methodology<a class="headerlink" href="#methodology" title="Link to this heading">#</a></h2>
 <section id="prediction-process">
 <h3>Prediction Process<a class="headerlink" href="#prediction-process" title="Link to this heading">#</a></h3>
-<p>For each ungauged basin, we predict the KL divergence between its flow-duration curve (FDC) and the FDC of every gauged station in the network. Predictions use XGBoost models trained on pairwise comparisons of gauged stations, using physical watershed attributes (e.g. slope, elevation, drainage area) and the Euclidean distance between basin centroids as features (see the repository). The model learns to predict log(KLD), and predictions are back-transformed with exp(). Trial 6 was selected (the trial whose median out-of-sample MAE is closest to the overall median across all trials).</p>
+<p>For each ungauged basin, we predict the KL divergence between its flow-duration curve (FDC) and the FDC of every gauged station in the network. Predictions use XGBoost models trained on pairwise comparisons of gauged stations, using physical watershed attributes (e.g. slope, elevation, drainage area) and the Euclidean distance between basin centroids as features (see the <a class="reference external" href="https://github.com/dankovacek/divergence_prediction">KL divergence prediction repository</a>). The model learns to predict log(KLD), and predictions are back-transformed with exp(). Trial 6 was selected (the trial whose median out-of-sample MAE is closest to the overall median across all trials).</p>
 </section>
 <section id="point-selection-and-classification">
 <h3>Point Selection and Classification<a class="headerlink" href="#point-selection-and-classification" title="Link to this heading">#</a></h3>
 <p>Only ungauged basins with minimum predicted KLD <strong>greater than 1 bit</strong> are plotted. This threshold excludes basins that are very well represented by at least one existing station (since KLD &lt; 1 bit represents a small divergence in information terms).</p>
 <p>The plotted basins are classified into three groups by their minimum predicted KLD:</p>
 <ul class="simple">
-<li><p><strong>1–2 bits</strong> (dark): basins with reasonable representation, though some divergence remains.</p></li>
-<li><p><strong>2–5 bits</strong> (medium): basins with moderate to significant gaps in coverage.</p></li>
-<li><p><strong>5+ bits</strong> (bright pink): basins with poor representation, indicating substantial gaps between their FDC and the network.</p></li>
+<li><p><strong>1–2 bits</strong> (dark): basins with lower than median predicted KL divergence.</p></li>
+<li><p><strong>2–5 bits</strong> (magenta): basins least well represented by the network.</p></li>
 </ul>
 </section>
 <section id="station-network-overlay">
 <h3>Station Network Overlay<a class="headerlink" href="#station-network-overlay" title="Link to this heading">#</a></h3>
-<p>The map shows all gauged stations within the geographic bounding box of the plotted basins. Active stations (green) are currently in operation, while discontinued stations (orange) are no longer collecting data.</p>
+<p>The map shows all gauged stations within the bounding box of the plotted basins. Active stations (green) are currently in operation, while discontinued stations (orange) are no longer collecting data.</p>
 </section>
 <section id="relationship-to-station-importance">
 <h3>Relationship to Station Importance<a class="headerlink" href="#relationship-to-station-importance" title="Link to this heading">#</a></h3>
@@ -411,22 +409,30 @@
 </ul>
 <p>These two views provide complementary perspectives on network adequacy: one identifies which stations are most valuable to the current ungauged space, and the other identifies which areas have the poorest coverage.  Here “coverage” means recoverability of the flow duration curve.</p>
 </section>
-<section id="threshold-sensitivity">
-<h3>Threshold Sensitivity<a class="headerlink" href="#threshold-sensitivity" title="Link to this heading">#</a></h3>
-<p>The station-importance ranking is sensitive to the tie threshold used when several gauged stations fall close to the minimum predicted KLD for a basin. The original 5% rule is intentionally strict, so the analysis below recomputes soft counts at 5, 10, 20, 30, 40, and 50 percent above the basin-specific minimum KLD. The purpose is to show whether the ranking is stable when the tie band is widened to better match the spread in predicted KLD values.</p>
-</section>
 <section id="best-donor-cdf">
 <h3>Best-Donor CDF<a class="headerlink" href="#best-donor-cdf" title="Link to this heading">#</a></h3>
-<p>The second plot shows the empirical CDF of the basin-level minimum predicted KLD values, which is the set of best-donor values after each ungauged basin has been matched to its most representative gauged station. This is the same output that drives the monitoring-region map above, and it provides the baseline distribution against which the threshold sweep should be read.</p>
-<div style="height:680px;"><script src="bokeh-content-bac41de18a364893996778f6efcb68c4-monitoring-region-evaluation.js" id="d7f7081c-d29a-4042-81f9-2c869fb7ae6e"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<p>The final comparison plot overlays two CDFs in the same KLD units used by the map colours: 1) minimum predicted KLD for each ungauged basin (best donor), and 2) pairwise station-to-station KLD values from the XGBoost training sample. Both curves are plotted with percentile sampling (200 points max), not all raw points. This makes the &lt;1, 1-2, 2-5, and &gt;5 bit map classes directly interpretable against the training distribution.</p>
+<div style="height:700px;"><script src="bokeh-content-6d63061e0e914126ba51a3e0634b6f3f-monitoring-region-evaluation.js" id="f721debe-20a7-4340-b274-283ebb37861c"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">plot_station_rankings</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_station_threshold_and_cdf_layout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plot_pred_dkl</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_ungauged_overview_map</span>
 
-<span class="n">show</span><span class="p">(</span><span class="n">build_station_threshold_and_cdf_layout</span><span class="p">())</span>
+<span class="n">show</span><span class="p">(</span><span class="n">build_ungauged_overview_map</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>The map above shows where higher or lower minimum KLD values occur in space. The two plots below provide the distribution context for those colours. The soft-count CDF panel shows how station representation concentration changes as the tie threshold increases, and the KLD CDF panel shows where the map classes sit relative to the station-pair training sample.</p>
+<div style="height:320px;"><script src="bokeh-content-754dbc7db0e14115a9d0010007275a81-monitoring-region-evaluation.js" id="cea58a3e-512e-47d0-9f09-166f695368e5"></script></div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">bokeh.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">show</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plot_station_rankings</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_best_donor_cdf_plot</span>
+
+<span class="n">show</span><span class="p">(</span><span class="n">build_best_donor_cdf_plot</span><span class="p">())</span>
 </pre></div>
 </div>
 </section>
@@ -496,7 +502,6 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#point-selection-and-classification">Point Selection and Classification</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#station-network-overlay">Station Network Overlay</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#relationship-to-station-importance">Relationship to Station Importance</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#threshold-sensitivity">Threshold Sensitivity</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#best-donor-cdf">Best-Donor CDF</a></li>
 </ul>
 </li>

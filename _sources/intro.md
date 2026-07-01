@@ -33,3 +33,20 @@ from plot_station_rankings import build_station_importance_map
 
 show(build_station_importance_map())
 :::
+
+
+### Threshold Sensitivity
+
+The station-importance ranking is sensitive to the tie threshold used when several gauged stations fall close to the minimum predicted KLD for a basin. The original 5% rule is intentionally strict, so the analysis below recomputes soft counts at 5, 10, 20, 30, 40, and 50% above the basin-specific minimum KLD. The purpose is to show whether the ranking is stable when the tie band is widened to better match the spread in predicted KLD values.
+
+:::{bokeh-plot}
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from bokeh.io import show
+from plot_station_rankings import build_station_threshold_sensitivity_plot
+
+show(build_station_threshold_sensitivity_plot())
+:::
